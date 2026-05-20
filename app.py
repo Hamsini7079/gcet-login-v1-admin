@@ -623,12 +623,73 @@ def admin_dashboard():
 
 @app.route("/admin/download_excel")
 def download_excel():
-    """Download Excel file."""
+    """
+    Generate Excel fresh from database every time download is clicked.
+    This works correctly on Render.com because it reads from
+    the database (which is reliable) instead of a saved file.
+    """
     if not is_admin():
         return redirect(url_for("admin_login"))
-    if not os.path.exists(EXCEL_FILE):
-        return "Excel file not found.", 404
-    return send_file(EXCEL_FILE, as_attachment=True, download_name="GCET_Sessions.xlsx")
+
+    import io
+
+    # Read ALL sessions from database
+    conn = get_db()
+    rows = conn.execute("SELECT * FROM sessions ORDER BY id ASC").fetchall()
+    conn.close()
+
+    # Create a fresh Excel workbook in memory
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "GCET Sessions"
+
+    # Write header row
+    for col, header in enumerate(EXCEL_HEADERS, start=1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font      = HEADER_FONT
+        cell.fill      = HEADER_FILL
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+        cell.border    = THIN_BORDER
+
+    # Set column widths
+    col_widths = [6, 10, 22, 20, 18, 22, 12, 24, 24, 14]
+    for i, width in enumerate(col_widths, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = width
+    ws.row_dimensions[1].height = 22
+
+    # Write all session rows
+    for idx, row in enumerate(rows, start=1):
+        s = dict(row)
+        fill = ROW_FILL_1 if idx % 2 == 0 else ROW_FILL_2
+        row_data = [
+            idx,
+            "Student" if s["role"] == "student" else "Faculty",
+            s["name"],
+            s.get("branch") or "—",
+            s.get("specialization") or "—",
+            s.get("roll_or_id") or "—",
+            s.get("system_no") or "—",
+            s.get("entry_time") or "—",
+            s.get("exit_time") or "—",
+            s.get("duration") or "—",
+        ]
+        for col, value in enumerate(row_data, start=1):
+            cell = ws.cell(row=idx+1, column=col, value=value)
+            cell.fill      = fill
+            cell.border    = THIN_BORDER
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    # Save to memory buffer instead of a file
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name="GCET_Sessions.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 
 @app.route("/admin/clear", methods=["POST"])

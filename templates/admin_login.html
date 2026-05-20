@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Login — GCET</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0d1b2a; --card: #1b2f45; --text: #f5f0e8;
+      --muted: #8fa0b0; --border: rgba(255,255,255,0.09);
+      --inbg: rgba(255,255,255,0.05);
+      --teal: #00b4a6; --teal2: #008f83;
+      --red: #e74c3c; --gold: #f4c430;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .box {
+      background: var(--card); border-radius: 20px;
+      padding: 40px 36px; width: 100%; max-width: 420px;
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+      text-align: center;
+    }
+    .lock { font-size: 52px; margin-bottom: 16px; }
+    h1 {
+      font-size: 22px; font-weight: 700; color: var(--text);
+      margin-bottom: 4px;
+    }
+    .sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+    .college {
+      font-size: 13px; color: var(--gold); font-weight: 600;
+      margin-bottom: 24px;
+    }
+    label {
+      display: block; font-size: 11px; font-weight: 600;
+      letter-spacing: 1.2px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 6px; text-align: left;
+    }
+    input {
+      width: 100%; padding: 13px 15px;
+      background: var(--inbg); border: 1.5px solid var(--border);
+      border-radius: 10px; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 14px;
+      outline: none; margin-bottom: 18px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    input:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(0,180,166,.15);
+    }
+    .btn {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--teal), var(--teal2));
+      border: none; border-radius: 12px; color: #fff;
+      font-family: 'DM Sans', sans-serif; font-size: 14px;
+      font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+      cursor: pointer; transition: transform .15s, box-shadow .15s;
+      box-shadow: 0 4px 20px rgba(0,180,166,.35);
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,180,166,.45); }
+    .error {
+      background: rgba(231,76,60,.1); border: 1px solid rgba(231,76,60,.3);
+      color: var(--red); border-radius: 10px; padding: 10px 14px;
+      font-size: 13px; margin-bottom: 16px;
+    }
+    .back {
+      display: block; margin-top: 20px; font-size: 12px;
+      color: var(--muted); text-decoration: none;
+      transition: color .2s;
+    }
+    .back:hover { color: var(--teal); }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="lock">🔐</div>
+    <h1>Admin Access</h1>
+    <div class="college">Geethanjali College of Engineering and Technology</div>
+    <div class="sub">Enter the admin password to view all session records</div>
+
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST">
+      <label>Admin Password</label>
+      <input type="password" name="password" placeholder="Enter admin password" autofocus required/>
+      <button type="submit" class="btn">🔓 Login as Admin</button>
+    </form>
+
+    <a href="/" class="back">← Back to Login Page</a>
+  </div>
+</body>
+</html>

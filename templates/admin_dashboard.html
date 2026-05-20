@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard — GCET</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0d1b2a; --card: #1b2f45; --text: #f5f0e8;
+      --muted: #8fa0b0; --border: rgba(255,255,255,0.09);
+      --inbg: rgba(255,255,255,0.05);
+      --teal: #00b4a6; --teal2: #008f83;
+      --gold: #f4c430; --red: #e74c3c; --green: #2ecc71;
+      --shadow: 0 8px 40px rgba(0,0,0,0.3);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; padding: 24px 16px 60px;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: 1100px; margin: 0 auto 28px; flex-wrap: wrap; gap: 12px;
+    }
+    .header-left h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(18px, 3vw, 26px); font-weight: 900; color: var(--text);
+    }
+    .header-left p { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .header-right { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      padding: 10px 18px; border: none; border-radius: 10px;
+      font-family: 'DM Sans', sans-serif; font-size: 13px;
+      font-weight: 700; cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+      text-decoration: none; display: inline-block;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-teal {
+      background: linear-gradient(135deg, var(--teal), var(--teal2));
+      color: #fff; box-shadow: 0 4px 14px rgba(0,180,166,.3);
+    }
+    .btn-red {
+      background: rgba(231,76,60,.12); border: 1.5px solid rgba(231,76,60,.3);
+      color: var(--red);
+    }
+    .btn-ghost {
+      background: var(--inbg); border: 1.5px solid var(--border); color: var(--muted);
+    }
+
+    /* ── STATS CARDS ── */
+    .stats {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px; max-width: 1100px; margin: 0 auto 28px;
+    }
+    .stat-card {
+      background: var(--card); border-radius: 16px; padding: 20px 22px;
+      border: 1px solid var(--border); box-shadow: var(--shadow);
+    }
+    .stat-icon { font-size: 28px; margin-bottom: 8px; }
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px; font-weight: 900; color: var(--teal); line-height: 1;
+    }
+    .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ── TABLE CARD ── */
+    .table-card {
+      background: var(--card); border-radius: 18px; padding: 24px;
+      max-width: 1100px; margin: 0 auto;
+      border: 1px solid var(--border); box-shadow: var(--shadow);
+      overflow-x: auto;
+    }
+    .table-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px; font-weight: 700; color: var(--text);
+      margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ── SEARCH BAR ── */
+    .search-bar {
+      width: 100%; padding: 11px 15px;
+      background: var(--inbg); border: 1.5px solid var(--border);
+      border-radius: 10px; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 14px;
+      outline: none; margin-bottom: 18px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .search-bar:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(0,180,166,.15);
+    }
+
+    /* ── TABLE ── */
+    table {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+      min-width: 750px;
+    }
+    thead tr {
+      background: rgba(0,180,166,.12);
+    }
+    th {
+      padding: 12px 14px; text-align: left;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+      color: var(--teal); border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 11px 14px; border-bottom: 1px solid var(--border);
+      color: var(--text); vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,.03); }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; letter-spacing: .5px;
+    }
+    .badge-student { background: rgba(0,180,166,.15); color: var(--teal); }
+    .badge-faculty { background: rgba(244,196,48,.15); color: var(--gold); }
+    .badge-active  { background: rgba(46,204,113,.15); color: var(--green);
+                     animation: pulse 2s infinite; }
+    .badge-done    { background: rgba(255,255,255,.06); color: var(--muted); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+    .time { font-family: monospace; font-size: 12px; color: var(--gold); }
+    .exit { font-family: monospace; font-size: 12px; color: var(--red); }
+    .dur  { font-family: monospace; font-size: 12px; color: var(--teal); }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      text-align: center; padding: 40px; color: var(--muted); font-size: 14px;
+    }
+    .empty .emoji { font-size: 36px; margin-bottom: 10px; }
+
+    /* ── CONFIRM MODAL ── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.75); backdrop-filter: blur(6px);
+      z-index: 999; align-items: center; justify-content: center; padding: 16px;
+    }
+    .overlay.show { display: flex; }
+    .modal {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 28px 24px; max-width: 380px; width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,.5); text-align: center;
+    }
+    .modal h2 { font-size: 18px; margin-bottom: 8px; }
+    .modal p  { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+    .modal-acts { display: flex; gap: 10px; justify-content: center; }
+  </style>
+</head>
+<body>
+
+<!-- Confirm clear modal -->
+<div class="overlay" id="confirm-modal">
+  <div class="modal">
+    <div style="font-size:40px;margin-bottom:12px;">🗑️</div>
+    <h2>Clear All History?</h2>
+    <p>This will permanently delete all completed session records from both the database and Excel file. This cannot be undone.</p>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeConfirm()">Cancel</button>
+      <form action="/admin/clear" method="POST" style="display:inline;">
+        <button type="submit" class="btn btn-red">Yes, Clear All</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HEADER ══ -->
+<div class="header">
+  <div class="header-left">
+    <h1>🎓 Admin Dashboard</h1>
+    <p>Geethanjali College of Engineering and Technology — Session Records</p>
+  </div>
+  <div class="header-right">
+    <a href="/admin/download_excel" class="btn btn-teal">📥 Download Excel</a>
+    <button class="btn btn-red" onclick="openConfirm()">🗑 Clear History</button>
+    <a href="/admin/logout" class="btn btn-ghost">🚪 Logout</a>
+    <a href="/" class="btn btn-ghost">🏠 Login Page</a>
+  </div>
+</div>
+
+<!-- ══ STATS ══ -->
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-icon">📊</div>
+    <div class="stat-num">{{ total_count }}</div>
+    <div class="stat-label">Total Sessions</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">📅</div>
+    <div class="stat-num">{{ today_count }}</div>
+    <div class="stat-label">Logins Today</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">🟢</div>
+    <div class="stat-num" style="color:var(--green)">{{ active_count }}</div>
+    <div class="stat-label">Currently Logged In</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">📅</div>
+    <div class="stat-num" style="font-size:18px;padding-top:6px;">{{ today }}</div>
+    <div class="stat-label">Today's Date</div>
+  </div>
+</div>
+
+<!-- ══ TABLE ══ -->
+<div class="table-card">
+  <div class="table-title">📋 All Session Records</div>
+
+  <!-- Search bar -->
+  <input type="text" class="search-bar" id="search"
+         placeholder="🔍 Search by name, branch, roll number..."
+         onkeyup="filterTable()"/>
+
+  {% if sessions %}
+  <table id="records-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Status</th>
+        <th>Role</th>
+        <th>Name</th>
+        <th>Branch / Dept</th>
+        <th>Specialization</th>
+        <th>Roll / ID</th>
+        <th>System No</th>
+        <th>Entry Time</th>
+        <th>Exit Time</th>
+        <th>Duration</th>
+      </tr>
+    </thead>
+    <tbody id="table-body">
+      {% for s in sessions %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>
+          {% if not s.exitTime %}
+            <span class="badge badge-active">● Live</span>
+          {% else %}
+            <span class="badge badge-done">Done</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if s.role == 'student' %}
+            <span class="badge badge-student">🧑‍🎓 Student</span>
+          {% else %}
+            <span class="badge badge-faculty">👩‍🏫 Faculty</span>
+          {% endif %}
+        </td>
+        <td><strong>{{ s.name | e }}</strong></td>
+        <td>{{ (s.branch if s.role == 'student' else s.department) | e }}</td>
+        <td>{{ s.specialization | e if s.role == 'student' and s.specialization else '—' }}</td>
+        <td>{{ (s.roll if s.role == 'student' else s.facultyId) | e }}</td>
+        <td>{{ s.system | e if s.role == 'student' else '—' }}</td>
+        <td class="time">{{ s.entryTime | e }}</td>
+        <td class="exit">{{ s.exitTime | e if s.exitTime else '⏳ Active' }}</td>
+        <td class="dur">{{ s.duration | e if s.duration else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% else %}
+  <div class="empty">
+    <div class="emoji">📭</div>
+    No session records found yet.<br>
+    Records will appear here when students and faculty login.
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  /* Search / filter table rows */
+  function filterTable(){
+    const q   = document.getElementById('search').value.toLowerCase();
+    const rows= document.getElementById('table-body').querySelectorAll('tr');
+    rows.forEach(row=>{
+      row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  }
+
+  /* Confirm clear modal */
+  function openConfirm(){ document.getElementById('confirm-modal').classList.add('show'); }
+  function closeConfirm(){ document.getElementById('confirm-modal').classList.remove('show'); }
+</script>
+</body>
+</html>

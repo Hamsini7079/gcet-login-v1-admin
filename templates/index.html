@@ -1,0 +1,963 @@
+{% macro render_banner_rows(s, show_exit) %}
+  <div class="b-row"><span class="b-key">👤 Name</span><span class="b-val">{{ s.name | e }}</span></div>
+  <div class="b-row"><span class="b-key">🏫 Role</span><span class="b-val">{{ '🧑‍🎓 Student' if s.role == 'student' else '👩‍🏫 Faculty' }}</span></div>
+  {% if s.role == 'student' %}
+    <div class="b-row"><span class="b-key">📚 Branch</span><span class="b-val">{{ s.branch | e }}</span></div>
+    {% if s.specialization %}<div class="b-row"><span class="b-key">⚡ Specialization</span><span class="b-val">{{ s.specialization | e }}</span></div>{% endif %}
+    <div class="b-row"><span class="b-key">🆔 Roll</span><span class="b-val">{{ s.roll | e }}</span></div>
+    <div class="b-row"><span class="b-key">💻 System</span><span class="b-val">{{ s.system | e }}</span></div>
+  {% else %}
+    <div class="b-row"><span class="b-key">🏛️ Dept</span><span class="b-val">{{ s.department | e }}</span></div>
+    <div class="b-row"><span class="b-key">🪪 Faculty ID</span><span class="b-val">{{ s.facultyId | e }}</span></div>
+  {% endif %}
+  <div class="b-row"><span class="b-key">🕐 Entry</span><span class="b-val t">{{ s.entryTime | e }}</span></div>
+  {% if show_exit and s.exitTime %}
+    <div class="b-row"><span class="b-key">🚪 Exit</span><span class="b-val exit">{{ s.exitTime | e }}</span></div>
+    {% if s.duration %}<div class="b-row"><span class="b-key">⏱ Duration</span><span class="b-val dur">{{ s.duration | e }}</span></div>{% endif %}
+  {% endif %}
+{% endmacro %}
+
+{% macro render_session_rows(s) %}
+  <div class="s-row"><span class="s-key">👤 Name</span><span class="s-val">{{ s.name | e }}</span></div>
+  <div class="s-row"><span class="s-key">🏫 Role</span><span class="s-val c-teal">{{ '🧑‍🎓 Student' if s.role == 'student' else '👩‍🏫 Faculty' }}</span></div>
+  {% if s.role == 'student' %}
+    <div class="s-row"><span class="s-key">📚 Branch</span><span class="s-val">{{ s.branch | e }}</span></div>
+    {% if s.specialization %}<div class="s-row"><span class="s-key">⚡ Specialization</span><span class="s-val">{{ s.specialization | e }}</span></div>{% endif %}
+    <div class="s-row"><span class="s-key">🆔 Roll Number</span><span class="s-val">{{ s.roll | e }}</span></div>
+    <div class="s-row"><span class="s-key">💻 System No.</span><span class="s-val">{{ s.system | e }}</span></div>
+  {% else %}
+    <div class="s-row"><span class="s-key">🏛️ Department</span><span class="s-val">{{ s.department | e }}</span></div>
+    <div class="s-row"><span class="s-key">🪪 Faculty ID</span><span class="s-val">{{ s.facultyId | e }}</span></div>
+  {% endif %}
+  <div class="s-row"><span class="s-key">🕐 Entry Time</span><span class="s-val c-gold mono">{{ s.entryTime | e }}</span></div>
+{% endmacro %}
+
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GCET — Login Portal</title>
+
+  <!--
+    UnifrakturMaguntia = the web version of "Old English Text MT"
+    It looks exactly the same and works on ALL browsers and devices.
+    Old English Text MT only works if it is installed on Windows.
+    This Google Fonts version works everywhere — mobile, Mac, Linux, etc.
+  -->
+  <link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* ═══════════════════════════════
+       THEME TOKENS
+    ═══════════════════════════════ */
+    [data-theme="dark"] {
+      --bg:      #0d1b2a;
+      --card:    #1b2f45;
+      --text:    #f5f0e8;
+      --muted:   #8fa0b0;
+      --border:  rgba(255,255,255,0.09);
+      --inbg:    rgba(255,255,255,0.05);
+      --shadow:  0 8px 40px rgba(0,0,0,0.35);
+      --overlay: rgba(0,0,0,0.80);
+    }
+    [data-theme="light"] {
+      --bg:      #eef2f7;
+      --card:    #ffffff;
+      --text:    #1a2a3a;
+      --muted:   #5a7080;
+      --border:  rgba(0,0,0,0.1);
+      --inbg:    rgba(0,0,0,0.04);
+      --shadow:  0 8px 40px rgba(0,0,0,0.12);
+      --overlay: rgba(0,0,0,0.62);
+    }
+    :root {
+      --teal:  #00b4a6;
+      --teal2: #008f83;
+      --gold:  #f4c430;
+      --red:   #e74c3c;
+      --green: #2ecc71;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 36px 16px 80px;
+      transition: background .3s, color .3s;
+      overflow-x: hidden;
+    }
+
+    /* ── PARTICLE CANVAS ── */
+    #cv {
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0; opacity: .5;
+    }
+
+    .page {
+      position: relative; z-index: 1; width: 100%;
+      display: flex; flex-direction: column; align-items: center;
+    }
+
+    /* ── THEME TOGGLE ── */
+    .theme-btn {
+      position: fixed; top: 16px; right: 16px; z-index: 200;
+      background: var(--card); border: 1.5px solid var(--border);
+      border-radius: 50px; padding: 8px 14px; cursor: pointer;
+      font-size: 17px; display: flex; align-items: center; gap: 6px;
+      box-shadow: var(--shadow); transition: border-color .2s;
+    }
+    .theme-btn:hover { border-color: var(--teal); }
+    .theme-btn .lbl { font-size: 12px; font-weight: 600; color: var(--muted); }
+
+    /* ── COLLEGE HEADER ── */
+    .header { text-align: center; margin-bottom: 28px; animation: fadeDown .6s ease both; }
+
+    .logo-ring {
+      width: 88px; height: 88px;
+      background: linear-gradient(135deg, var(--teal), var(--teal2));
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px; font-size: 38px;
+      box-shadow: 0 4px 28px rgba(0,180,166,.45);
+      overflow: hidden; cursor: pointer; position: relative;
+      transition: box-shadow .2s;
+    }
+    .logo-ring:hover { box-shadow: 0 6px 36px rgba(0,180,166,.65); }
+    .logo-ring img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .logo-hint {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,.58); color: #fff;
+      font-size: 9px; font-weight: 700; text-align: center;
+      padding: 4px 0; border-radius: 0 0 50px 50px;
+      opacity: 0; transition: opacity .2s;
+    }
+    .logo-ring:hover .logo-hint { opacity: 1; }
+    #logo-input { display: none; }
+
+    /*
+      ╔════════════════════════════════════════╗
+      ║  OLD ENGLISH TEXT MT — college name   ║
+      ║  Font: UnifrakturMaguntia (Google)    ║
+      ║  Applied ONLY to the college name     ║
+      ╚════════════════════════════════════════╝
+    */
+    .college-name {
+      font-family: 'UnifrakturMaguntia', 'Old English Text MT', cursive;
+      font-size: clamp(22px, 4vw, 36px);
+      color: var(--text);
+      line-height: 1.3;
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 14px rgba(0,180,166,.18);
+    }
+    .college-name em { color: var(--gold); font-style: normal; }
+
+    /* Sub-title uses normal DM Sans — not Old English */
+    .college-sub {
+      margin-top: 6px; font-size: 11px; color: var(--muted);
+      letter-spacing: 2.5px; text-transform: uppercase;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--card); border-radius: 20px;
+      padding: 30px 28px; width: 100%; max-width: 520px;
+      box-shadow: var(--shadow); border: 1px solid var(--border);
+      transition: background .3s;
+    }
+    .card-title {
+      font-family: Georgia, serif; font-size: 18px; font-weight: 700;
+      color: var(--text); margin-bottom: 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-title::after {
+      content: ''; flex: 1; height: 2px;
+      background: linear-gradient(90deg, var(--teal), transparent);
+    }
+
+    /* ── ROLE TABS ── */
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
+    .tab {
+      padding: 11px; border: 2px solid var(--border); border-radius: 12px;
+      background: transparent; color: var(--muted);
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: all .2s;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .tab:hover { border-color: var(--teal); color: var(--teal); }
+    .tab.on { border-color: var(--teal); background: rgba(0,180,166,.12); color: var(--teal); }
+
+    /* ── FORM FIELDS ── */
+    .fg { margin-bottom: 14px; }
+    label {
+      display: block; font-size: 11px; font-weight: 600;
+      letter-spacing: 1.2px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 6px;
+    }
+    input, select {
+      width: 100%; padding: 12px 15px;
+      background: var(--inbg); border: 1.5px solid var(--border);
+      border-radius: 10px; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 14px;
+      outline: none; appearance: none; -webkit-appearance: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    input::placeholder { color: var(--muted); opacity: .7; }
+    input:focus, select:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(0,180,166,.15);
+    }
+    select option { background: var(--card); color: var(--text); }
+    .sw { position: relative; }
+    .sw::after {
+      content: '▾'; position: absolute; right: 14px; top: 50%;
+      transform: translateY(-50%); color: var(--teal);
+      pointer-events: none; font-size: 16px;
+    }
+    .spec-badge {
+      display: inline-block; background: rgba(244,196,48,.14); color: var(--gold);
+      font-size: 11px; font-weight: 600; letter-spacing: 1px;
+      border-radius: 6px; padding: 3px 8px; margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+    .err { color: var(--red); font-size: 11px; margin-top: 4px; display: none; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      padding: 13px 20px; border: none; border-radius: 12px;
+      font-family: 'DM Sans', sans-serif; font-size: 14px;
+      font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+      cursor: pointer; transition: transform .15s, box-shadow .15s, opacity .15s;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-2px); }
+    .btn:active  { transform: translateY(0); }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+    .full { width: 100%; }
+    .btn-login {
+      background: linear-gradient(135deg, var(--teal), var(--teal2));
+      color: #fff; margin-top: 8px;
+      box-shadow: 0 4px 20px rgba(0,180,166,.35);
+    }
+    .btn-login:hover:not(:disabled) { box-shadow: 0 8px 28px rgba(0,180,166,.45); }
+    .btn-logout {
+      background: linear-gradient(135deg, #c0392b, #e74c3c);
+      color: #fff; margin-top: 12px;
+      box-shadow: 0 4px 20px rgba(231,76,60,.3);
+    }
+    .btn-logout:hover { box-shadow: 0 8px 28px rgba(231,76,60,.45); }
+    .btn-ghost {
+      background: var(--inbg); border: 1.5px solid var(--border);
+      color: var(--text); font-size: 13px;
+    }
+    .btn-confirm {
+      background: linear-gradient(135deg,#c0392b,#e74c3c);
+      color:#fff; font-size:13px;
+      box-shadow:0 4px 14px rgba(231,76,60,.3);
+    }
+    .btn-clr {
+      background: rgba(231,76,60,.08); border: 1.5px solid rgba(231,76,60,.25);
+      color: var(--red); font-size: 12px; padding: 7px 14px;
+      border-radius: 8px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; font-weight: 600;
+      transition: background .2s;
+    }
+    .btn-clr:hover { background: rgba(231,76,60,.18); }
+
+    /* ── INFO BANNER ── */
+    .banner {
+      width: 100%; max-width: 520px; border-radius: 16px;
+      padding: 18px 22px; margin-bottom: 18px; display: none;
+      animation: fadeDown .5s ease both;
+    }
+    .banner.wb { background: rgba(0,180,166,.09);   border: 1px solid rgba(0,180,166,.28); }
+    .banner.lo { background: rgba(46,204,113,.08);  border: 1px solid rgba(46,204,113,.25); }
+    .banner-title {
+      font-family: Georgia, serif; font-size: 15px; font-weight: 700; margin-bottom: 10px;
+    }
+    .banner.wb .banner-title { color: var(--teal); }
+    .banner.lo .banner-title { color: var(--green); }
+    .b-row {
+      display: flex; justify-content: space-between;
+      font-size: 12px; padding: 5px 0; border-bottom: 1px solid var(--border);
+    }
+    .b-row:last-of-type { border-bottom: none; }
+    .b-key  { color: var(--muted); }
+    .b-val  { color: var(--text); font-weight: 600; }
+    .b-val.t    { color: var(--gold);  font-family: monospace; }
+    .b-val.exit { color: var(--red);   font-family: monospace; }
+    .b-val.dur  { color: var(--teal);  font-family: monospace; }
+    .banner-note { margin-top: 10px; font-size: 11px; color: var(--muted); font-style: italic; }
+
+    /* ── ACTIVE SESSION ── */
+    .sess-panel {
+      width: 100%; max-width: 520px; margin-top: 18px;
+      display: none; animation: fadeUp .5s ease both;
+    }
+    .sess-card {
+      background: var(--card); border: 1px solid rgba(0,180,166,.22);
+      border-radius: 18px; padding: 22px 24px; box-shadow: var(--shadow);
+    }
+    .sess-hdr {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+    }
+    .sess-title { font-family: Georgia,serif; font-size:15px; color:var(--teal); font-weight:700; }
+    .live {
+      background: rgba(46,204,113,.15); color: var(--green);
+      font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+      border-radius: 20px; padding: 3px 10px;
+      border: 1px solid rgba(46,204,113,.3); animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }
+    .s-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+    }
+    .s-row:last-child { border-bottom: none; }
+    .s-key { color: var(--muted); }
+    .s-val { color: var(--text); font-weight: 600; text-align: right; max-width: 62%; }
+    .c-teal { color: var(--teal)  !important; }
+    .c-gold  { color: var(--gold)  !important; }
+    .mono    { font-family: monospace !important; }
+
+    /* ── HISTORY ── */
+    .hist {
+      width: 100%; max-width: 520px; margin-top: 20px;
+      display: none; animation: fadeUp .5s ease both;
+    }
+    .hist-hdr {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+    }
+    .hist-title { font-family: Georgia,serif; font-size:15px; color:var(--muted); font-weight:700; }
+    .hist-item {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 13px 16px; margin-bottom: 10px;
+      font-size: 12px; color: var(--muted); transition: background .3s;
+    }
+    .h-name { color: var(--text); font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+    .h-row  { display: flex; justify-content: space-between; margin-top: 5px; }
+    .h-time { color: var(--gold); font-family: monospace; }
+    .h-exit { color: var(--red);  font-family: monospace; }
+    .h-dur  { color: var(--teal); font-family: monospace; }
+
+    /* ── MODAL ── */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: var(--overlay); backdrop-filter: blur(7px);
+      z-index: 999; align-items: center; justify-content: center; padding: 16px;
+    }
+    .overlay.show { display: flex; }
+    .modal {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 22px; padding: 28px 24px;
+      width: 100%; max-width: 480px;
+      animation: pop .3s ease both;
+      box-shadow: 0 20px 60px rgba(0,0,0,.55);
+    }
+    @keyframes pop {
+      from { opacity:0; transform:scale(.88) translateY(24px); }
+      to   { opacity:1; transform:scale(1)   translateY(0); }
+    }
+    .modal-title { font-family: Georgia,serif; font-size:18px; font-weight:700; margin-bottom:4px; }
+    .modal-sub   { font-size:13px; color:var(--muted); margin-bottom:16px; }
+    .modal-body  {
+      background: rgba(231,76,60,.06); border: 1px solid rgba(231,76,60,.2);
+      border-radius: 12px; padding: 14px 16px; margin-bottom: 18px;
+    }
+    .m-row {
+      display: flex; justify-content: space-between;
+      padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+    }
+    .m-row:last-child { border-bottom: none; }
+    .m-key { color: var(--muted); }
+    .m-val { color: var(--text); font-weight: 600; }
+    .m-val.t    { color: var(--gold); font-family: monospace; }
+    .m-val.exit { color: #ff6b6b;    font-family: monospace; font-weight: 700; }
+    .modal-acts { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(70px);
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--text); padding: 11px 22px; border-radius: 50px;
+      font-size: 13px; font-weight: 600; z-index: 2000;
+      box-shadow: 0 8px 30px rgba(0,0,0,.3);
+      transition: transform .35s ease, opacity .35s ease;
+      opacity: 0; white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* ── UTILS ── */
+    .hidden { display: none !important; }
+    @keyframes fadeDown { from{opacity:0;transform:translateY(-18px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeUp   { from{opacity:0;transform:translateY(16px)}  to{opacity:1;transform:translateY(0)} }
+
+    /* ── MOBILE ── */
+    @media(max-width:480px){
+      .card,.modal { padding: 22px 16px; }
+      .college-name { font-size: 20px; }
+      .modal-acts { flex-direction: column; }
+      .modal-acts .btn { width: 100%; }
+      .theme-btn .lbl { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="cv"></canvas>
+
+<!-- Dark / Light toggle -->
+<button class="theme-btn" onclick="toggleTheme()">
+  <span id="t-icon">🌙</span>
+  <span class="lbl" id="t-lbl">Dark</span>
+</button>
+
+<!-- Logo upload (hidden input) -->
+<input type="file" id="logo-input"
+       accept="image/png,image/jpeg,image/gif,image/webp"
+       onchange="uploadLogo(this)"/>
+
+<!-- Logout confirmation modal -->
+<div class="overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title">🚪 Confirm Logout</div>
+    <div class="modal-sub">Review your complete session details before leaving:</div>
+    <div class="modal-body" id="modal-rows"></div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost"   onclick="closeModal()">↩ Stay Logged In</button>
+      <button class="btn btn-confirm" onclick="confirmLogout()">✓ Confirm Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<div class="page">
+
+  <!-- ══ COLLEGE HEADER ══ -->
+  <div class="header">
+    <div class="logo-ring"
+         onclick="document.getElementById('logo-input').click()"
+         title="Click to upload college logo">
+      {% if logo_path %}
+        <img src="{{ logo_path }}" alt="GCET Logo" id="logo-img"/>
+      {% else %}
+        <span id="logo-emoji">🎓</span>
+      {% endif %}
+      <div class="logo-hint">📷 Upload Logo</div>
+    </div>
+
+    <!--
+      COLLEGE NAME — Old English Text MT font applied here ONLY
+      Font is UnifrakturMaguntia from Google Fonts
+      (web-compatible version of Old English Text MT)
+    -->
+    <div class="college-name">
+      Geethanjali College of <em>Engineering</em> and Technology
+    </div>
+
+    <!-- Sub-title stays in normal DM Sans font -->
+    <div class="college-sub">Student &amp; Faculty Portal</div>
+  </div>
+
+  <!-- ══ INFO BANNER ══ -->
+  <div class="banner {% if active %}wb{% endif %}" id="banner"
+       style="{% if active %}display:block{% else %}display:none{% endif %}">
+    <div class="banner-title" id="b-title">
+      {% if active %}👋 Welcome Back, {{ active.name | e }}!{% endif %}
+    </div>
+    <div id="b-body">
+      {% if active %}{{ render_banner_rows(active, False) }}{% endif %}
+    </div>
+    <div class="banner-note" id="b-note">
+      {% if active %}You are currently logged in. Please logout before switching users.{% endif %}
+    </div>
+  </div>
+
+  <!-- ══ LOGIN CARD ══ -->
+  <div class="card {% if active %}hidden{% endif %}" id="login-card">
+    <div class="card-title">🔐 Sign In</div>
+
+    <div class="tabs">
+      <button class="tab on" id="tab-s" onclick="setRole('student')">🧑‍🎓 Student</button>
+      <button class="tab"    id="tab-f" onclick="setRole('faculty')">👩‍🏫 Faculty</button>
+    </div>
+
+    <!-- Student Fields -->
+    <div id="sf">
+      <div class="fg">
+        <label>Branch</label>
+        <div class="sw">
+          <select id="branch" onchange="onBranch()">
+            <option value="">— Select Branch —</option>
+            <option value="CSE">Computer Science (CSE)</option>
+            <option value="ECE">Electronics &amp; Communication (ECE)</option>
+            <option value="EEE">Electrical Engineering (EEE)</option>
+            <option value="Mechanical">Mechanical Engineering</option>
+            <option value="Civil">Civil Engineering</option>
+          </select>
+        </div>
+        <div class="err" id="e-branch">Please select your branch.</div>
+      </div>
+
+      <div class="fg hidden" id="spec-grp">
+        <span class="spec-badge">✨ CSE Specialization</span>
+        <div class="sw">
+          <select id="spec">
+            <option value="">— Select Specialization —</option>
+            <option value="AIML">Artificial Intelligence &amp; ML (AIML)</option>
+            <option value="Cyber Security">Cyber Security</option>
+            <option value="Data Science">Data Science</option>
+          </select>
+        </div>
+        <div class="err" id="e-spec">Please select a specialization.</div>
+      </div>
+
+      <div class="fg">
+        <label>Full Name</label>
+        <input type="text" id="sname" placeholder="e.g. Arjun Reddy"
+               maxlength="80" autocomplete="off"/>
+        <div class="err" id="e-sname">Please enter your name.</div>
+      </div>
+      <div class="fg">
+        <label>Roll Number</label>
+        <input type="text" id="roll" placeholder="e.g. 22B91A0501"
+               maxlength="30" autocomplete="off"/>
+        <div class="err" id="e-roll">Please enter your roll number.</div>
+      </div>
+      <div class="fg">
+        <label>System Number</label>
+        <input type="text" id="sys" placeholder="e.g. SYS-042"
+               maxlength="30" autocomplete="off"/>
+        <div class="err" id="e-sys">Please enter your system number.</div>
+      </div>
+    </div>
+
+    <!-- Faculty Fields -->
+    <div id="ff" class="hidden">
+      <div class="fg">
+        <label>Department</label>
+        <div class="sw">
+          <select id="dept">
+            <option value="">— Select Department —</option>
+            <option value="CSE">Computer Science (CSE)</option>
+            <option value="ECE">Electronics &amp; Communication (ECE)</option>
+            <option value="EEE">Electrical Engineering (EEE)</option>
+            <option value="Mechanical">Mechanical Engineering</option>
+            <option value="Civil">Civil Engineering</option>
+          </select>
+        </div>
+        <div class="err" id="e-dept">Please select your department.</div>
+      </div>
+      <div class="fg">
+        <label>Full Name</label>
+        <input type="text" id="fname" placeholder="e.g. Dr. Priya Sharma"
+               maxlength="80" autocomplete="off"/>
+        <div class="err" id="e-fname">Please enter your name.</div>
+      </div>
+      <div class="fg">
+        <label>Faculty ID</label>
+        <input type="text" id="fid" placeholder="e.g. FAC-2024-007"
+               maxlength="30" autocomplete="off"/>
+        <div class="err" id="e-fid">Please enter your Faculty ID.</div>
+      </div>
+    </div>
+
+    <button class="btn btn-login full" id="login-btn" onclick="doLogin()">
+      🚀 Login &amp; Record Entry
+    </button>
+  </div>
+
+  <!-- ══ ACTIVE SESSION PANEL ══ -->
+  <div class="sess-panel" id="sess-panel"
+       style="{% if active %}display:block{% endif %}">
+    <div class="sess-card">
+      <div class="sess-hdr">
+        <div class="sess-title">📋 Active Session</div>
+        <span class="live">● Live</span>
+      </div>
+      <div id="sess-rows">
+        {% if active %}{{ render_session_rows(active) }}{% endif %}
+      </div>
+    </div>
+    <button class="btn btn-logout full" onclick="openModal()">
+      🚪 Logout &amp; Record Exit
+    </button>
+  </div>
+
+  <!-- ══ HISTORY ══ -->
+  <div class="hist" id="hist"
+       style="{% if history %}display:block{% endif %}">
+    <div class="hist-hdr">
+      <div class="hist-title">
+        🗂 Session History{% if history %} ({{ history|length }}){% endif %}
+      </div>
+      <button class="btn-clr" onclick="clearHist()">🗑 Clear All</button>
+    </div>
+    <div id="hist-list">
+      {% for s in history %}
+      <div class="hist-item">
+        <div class="h-name">
+          {% if loop.first %}🟢 {% endif %}{{ s.name | e }}
+          <span style="color:var(--muted);font-size:11px;font-weight:400;">
+            ({{ 'Student' if s.role=='student' else 'Faculty' }})
+          </span>
+        </div>
+        {% if s.role == 'student' %}
+          <div class="h-row"><span>📚 Branch</span>
+            <span>{{ s.branch | e }}{% if s.specialization %} / {{ s.specialization | e }}{% endif %}</span></div>
+          <div class="h-row"><span>🆔 Roll</span><span>{{ s.roll | e }}</span></div>
+          <div class="h-row"><span>💻 System</span><span>{{ s.system | e }}</span></div>
+        {% else %}
+          <div class="h-row"><span>🏛️ Dept</span><span>{{ s.department | e }}</span></div>
+          <div class="h-row"><span>🪪 ID</span><span>{{ s.facultyId | e }}</span></div>
+        {% endif %}
+        <div class="h-row"><span>🕐 Entry</span><span class="h-time">{{ s.entryTime | e }}</span></div>
+        <div class="h-row"><span>🚪 Exit</span>
+          <span class="h-exit">{{ s.exitTime | e if s.exitTime else '⚠ Tab closed' }}</span></div>
+        {% if s.duration %}
+        <div class="h-row"><span>⏱ Duration</span><span class="h-dur">{{ s.duration | e }}</span></div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+  /* live session state from server */
+  let A = {{ active | tojson }};
+  let exitPrev = null;
+
+  /* ════════════════════════════════════
+     PARTICLES
+  ════════════════════════════════════ */
+  (function(){
+    const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+    let W,H,P=[];
+    function resize(){ W=cv.width=innerWidth; H=cv.height=innerHeight; }
+    function rnd(a,b){ return a+Math.random()*(b-a); }
+    function init(){
+      P=[];
+      const n=Math.floor(W*H/18000);
+      for(let i=0;i<n;i++)
+        P.push({x:rnd(0,W),y:rnd(0,H),r:rnd(1,2.8),
+                dx:rnd(-.35,.35),dy:rnd(-.35,.35),a:rnd(.2,.7)});
+    }
+    function frame(){
+      ctx.clearRect(0,0,W,H);
+      const dark=document.documentElement.getAttribute('data-theme')==='dark';
+      const rgb=dark?'0,180,166':'0,140,128';
+      P.forEach(p=>{
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fillStyle=`rgba(${rgb},${p.a})`; ctx.fill();
+        p.x+=p.dx; p.y+=p.dy;
+        if(p.x<0)p.x=W; if(p.x>W)p.x=0;
+        if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+      });
+      for(let i=0;i<P.length;i++) for(let j=i+1;j<P.length;j++){
+        const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);
+        if(d<100){
+          ctx.beginPath(); ctx.moveTo(P[i].x,P[i].y); ctx.lineTo(P[j].x,P[j].y);
+          ctx.strokeStyle=`rgba(${rgb},${.12*(1-d/100)})`;
+          ctx.lineWidth=.7; ctx.stroke();
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+    resize(); init(); frame();
+    window.addEventListener('resize',()=>{resize();init();});
+  })();
+
+  /* ════════════════════════════════════
+     THEME
+  ════════════════════════════════════ */
+  function toggleTheme(){
+    const html=document.documentElement;
+    const dark=html.getAttribute('data-theme')==='dark';
+    html.setAttribute('data-theme',dark?'light':'dark');
+    document.getElementById('t-icon').textContent=dark?'☀️':'🌙';
+    document.getElementById('t-lbl').textContent=dark?'Light':'Dark';
+    localStorage.setItem('gcet_theme',dark?'light':'dark');
+  }
+  (function(){
+    const t=localStorage.getItem('gcet_theme');
+    if(t){
+      document.documentElement.setAttribute('data-theme',t);
+      document.getElementById('t-icon').textContent=t==='light'?'☀️':'🌙';
+      document.getElementById('t-lbl').textContent=t==='light'?'Light':'Dark';
+    }
+  })();
+
+  /* ════════════════════════════════════
+     LOGO UPLOAD
+  ════════════════════════════════════ */
+  function uploadLogo(inp){
+    const f=inp.files[0]; if(!f) return;
+    if(f.size>2*1024*1024){ showToast('❌ File too large. Max 2 MB.'); return; }
+    const fd=new FormData(); fd.append('logo',f);
+    fetch('/upload_logo',{method:'POST',body:fd})
+      .then(r=>r.json())
+      .then(d=>{
+        if(d.success){
+          const ring=document.querySelector('.logo-ring');
+          const em=document.getElementById('logo-emoji');
+          if(em) em.remove();
+          let img=document.getElementById('logo-img');
+          if(!img){ img=document.createElement('img'); img.id='logo-img'; img.alt='GCET Logo'; ring.prepend(img); }
+          img.src=d.path+'?t='+Date.now();
+          showToast('✅ Logo uploaded!');
+        } else { showToast('❌ '+d.message); }
+      }).catch(()=>showToast('❌ Upload failed.'));
+  }
+
+  /* ════════════════════════════════════
+     ROLE TABS
+  ════════════════════════════════════ */
+  function setRole(r){
+    const s=r==='student';
+    document.getElementById('tab-s').classList.toggle('on',s);
+    document.getElementById('tab-f').classList.toggle('on',!s);
+    document.getElementById('sf').classList.toggle('hidden',!s);
+    document.getElementById('ff').classList.toggle('hidden',s);
+    clearErrs();
+  }
+  function onBranch(){
+    const v=document.getElementById('branch').value;
+    document.getElementById('spec-grp').classList.toggle('hidden',v!=='CSE');
+    if(v!=='CSE') document.getElementById('spec').value='';
+  }
+
+  /* ════════════════════════════════════
+     VALIDATION
+  ════════════════════════════════════ */
+  function showErr(id){ document.getElementById(id).style.display='block'; }
+  function clearErrs(){ document.querySelectorAll('.err').forEach(e=>e.style.display='none'); }
+
+  /* ════════════════════════════════════
+     LOGIN
+  ════════════════════════════════════ */
+  function doLogin(){
+    clearErrs();
+    let ok=true;
+    const isStu=document.getElementById('tab-s').classList.contains('on');
+    let payload={role:isStu?'student':'faculty'};
+
+    if(isStu){
+      const branch=document.getElementById('branch').value;
+      const sname=document.getElementById('sname').value.trim();
+      const roll=document.getElementById('roll').value.trim();
+      const sys=document.getElementById('sys').value.trim();
+      const spec=document.getElementById('spec').value;
+      if(!branch){showErr('e-branch');ok=false;}
+      if(!sname) {showErr('e-sname'); ok=false;}
+      if(!roll)  {showErr('e-roll');  ok=false;}
+      if(!sys)   {showErr('e-sys');   ok=false;}
+      if(branch==='CSE'&&!spec){showErr('e-spec');ok=false;}
+      if(!ok) return;
+      Object.assign(payload,{name:sname,branch,roll,system:sys,specialization:spec});
+    } else {
+      const dept=document.getElementById('dept').value;
+      const fname=document.getElementById('fname').value.trim();
+      const fid=document.getElementById('fid').value.trim();
+      if(!dept) {showErr('e-dept'); ok=false;}
+      if(!fname){showErr('e-fname');ok=false;}
+      if(!fid)  {showErr('e-fid');  ok=false;}
+      if(!ok) return;
+      Object.assign(payload,{name:fname,department:dept,facultyId:fid});
+    }
+
+    const btn=document.getElementById('login-btn');
+    btn.disabled=true; btn.textContent='Logging in…';
+
+    fetch('/login',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.success){
+        A=d.session;
+        document.getElementById('login-card').classList.add('hidden');
+        hideBanner();
+        renderSessPanel(d.session);
+        showToast('✅ Logged in — '+d.session.entryTime);
+        setTimeout(()=>document.getElementById('sess-panel')
+          .scrollIntoView({behavior:'smooth',block:'start'}),120);
+      } else { showToast('❌ '+(d.message||'Login failed.')); }
+      btn.disabled=false; btn.textContent='🚀 Login & Record Entry';
+    })
+    .catch(()=>{ showToast('❌ Server error.'); btn.disabled=false; btn.textContent='🚀 Login & Record Entry'; });
+  }
+
+  /* ════════════════════════════════════
+     SESSION PANEL
+  ════════════════════════════════════ */
+  function renderSessPanel(s){
+    let h=sr('👤','Name',s.name);
+    h+=sr('🏫','Role',s.role==='student'?'🧑‍🎓 Student':'👩‍🏫 Faculty','c-teal');
+    if(s.role==='student'){
+      h+=sr('📚','Branch',s.branch);
+      if(s.specialization) h+=sr('⚡','Specialization',s.specialization);
+      h+=sr('🆔','Roll Number',s.roll);
+      h+=sr('💻','System No.',s.system);
+    } else {
+      h+=sr('🏛️','Department',s.department);
+      h+=sr('🪪','Faculty ID',s.facultyId);
+    }
+    h+=sr('🕐','Entry Time',s.entryTime,'c-gold mono');
+    document.getElementById('sess-rows').innerHTML=h;
+    document.getElementById('sess-panel').style.display='block';
+  }
+  function sr(icon,label,val,cls=''){
+    return `<div class="s-row"><span class="s-key">${icon} ${label}</span>
+            <span class="s-val ${cls}">${esc(val)}</span></div>`;
+  }
+
+  /* ════════════════════════════════════
+     LOGOUT MODAL
+  ════════════════════════════════════ */
+  function openModal(){
+    exitPrev=new Date().toLocaleString('en-IN',{
+      day:'2-digit',month:'short',year:'numeric',
+      hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+    let h=mr('👤 Name',A.name)+mr('🏫 Role',A.role==='student'?'🧑‍🎓 Student':'👩‍🏫 Faculty');
+    if(A.role==='student'){
+      h+=mr('📚 Branch',A.branch);
+      if(A.specialization)h+=mr('⚡ Specialization',A.specialization);
+      h+=mr('🆔 Roll Number',A.roll)+mr('💻 System No.',A.system);
+    } else {
+      h+=mr('🏛️ Department',A.department)+mr('🪪 Faculty ID',A.facultyId);
+    }
+    h+=mr('🕐 Entry Time',A.entryTime,'t')+mr('🚪 Exit Time',exitPrev,'exit');
+    document.getElementById('modal-rows').innerHTML=h;
+    document.getElementById('modal').classList.add('show');
+  }
+  function mr(k,v,cls=''){
+    return `<div class="m-row"><span class="m-key">${esc(k)}</span>
+            <span class="m-val ${cls}">${esc(v)}</span></div>`;
+  }
+  function closeModal(){ document.getElementById('modal').classList.remove('show'); }
+
+  function confirmLogout(){
+    closeModal();
+    fetch('/logout',{method:'POST'}).then(r=>r.json()).then(d=>{
+      if(d.success){
+        const s=d.session; A=null;
+        document.getElementById('sess-panel').style.display='none';
+        document.getElementById('login-card').classList.remove('hidden');
+        resetForm();
+        showBanner('lo','✅ Logged Out — '+s.name,buildBannerJS(s,true),
+          'Entry and exit times have been recorded. Log in again when ready.');
+        addHistItem(s);
+        showToast('👋 Goodbye, '+s.name+'!');
+        window.scrollTo({top:0,behavior:'smooth'});
+      } else { showToast('❌ '+(d.message||'Logout failed.')); }
+    }).catch(()=>showToast('❌ Server error.'));
+  }
+
+  /* ════════════════════════════════════
+     BANNER
+  ════════════════════════════════════ */
+  function showBanner(type,title,body,note){
+    const b=document.getElementById('banner');
+    b.className='banner '+type;
+    document.getElementById('b-title').textContent=title;
+    document.getElementById('b-body').innerHTML=body;
+    document.getElementById('b-note').textContent=note||'';
+    b.style.display='block';
+  }
+  function hideBanner(){ document.getElementById('banner').style.display='none'; }
+  function buildBannerJS(s,showExit){
+    let h=br('👤 Name',s.name)+br('🏫 Role',s.role==='student'?'🧑‍🎓 Student':'👩‍🏫 Faculty');
+    if(s.role==='student'){
+      h+=br('📚 Branch',s.branch);
+      if(s.specialization)h+=br('⚡ Specialization',s.specialization);
+      h+=br('🆔 Roll',s.roll)+br('💻 System',s.system);
+    } else { h+=br('🏛️ Dept',s.department)+br('🪪 Faculty ID',s.facultyId); }
+    h+=br('🕐 Entry',s.entryTime,'t');
+    if(showExit&&s.exitTime) h+=br('🚪 Exit',s.exitTime,'exit');
+    if(s.duration) h+=br('⏱ Duration',s.duration,'dur');
+    return h;
+  }
+  function br(k,v,cls=''){
+    return `<div class="b-row"><span class="b-key">${esc(k)}</span>
+            <span class="b-val ${cls}">${esc(v)}</span></div>`;
+  }
+
+  /* ════════════════════════════════════
+     HISTORY
+  ════════════════════════════════════ */
+  function addHistItem(s){
+    document.getElementById('hist').style.display='block';
+    let ex='';
+    if(s.role==='student'){
+      ex=`<div class="h-row"><span>📚 Branch</span>
+            <span>${esc(s.branch)}${s.specialization?' / '+esc(s.specialization):''}</span></div>
+          <div class="h-row"><span>🆔 Roll</span><span>${esc(s.roll)}</span></div>
+          <div class="h-row"><span>💻 System</span><span>${esc(s.system)}</span></div>`;
+    } else {
+      ex=`<div class="h-row"><span>🏛️ Dept</span><span>${esc(s.department)}</span></div>
+          <div class="h-row"><span>🪪 ID</span><span>${esc(s.facultyId)}</span></div>`;
+    }
+    const el=document.createElement('div');
+    el.className='hist-item';
+    el.innerHTML=`<div class="h-name">🟢 ${esc(s.name)}
+      <span style="color:var(--muted);font-size:11px;font-weight:400;">
+        (${s.role==='student'?'Student':'Faculty'})</span></div>${ex}
+      <div class="h-row"><span>🕐 Entry</span><span class="h-time">${esc(s.entryTime)}</span></div>
+      <div class="h-row"><span>🚪 Exit</span><span class="h-exit">${esc(s.exitTime||'')}</span></div>
+      ${s.duration?`<div class="h-row"><span>⏱ Duration</span><span class="h-dur">${esc(s.duration)}</span></div>`:''}`;
+    document.getElementById('hist-list').prepend(el);
+  }
+  function clearHist(){
+    if(!confirm('Clear all session history? This cannot be undone.')) return;
+    fetch('/clear_history',{method:'POST'}).then(r=>r.json()).then(d=>{
+      if(d.success){
+        document.getElementById('hist-list').innerHTML='';
+        document.getElementById('hist').style.display='none';
+        showToast('🗑 History cleared.');
+      }
+    }).catch(()=>showToast('❌ Failed to clear.'));
+  }
+
+  /* ════════════════════════════════════
+     RESET FORM
+  ════════════════════════════════════ */
+  function resetForm(){
+    ['branch','spec','dept'].forEach(id=>document.getElementById(id).value='');
+    ['sname','roll','sys','fname','fid'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('spec-grp').classList.add('hidden');
+    setRole('student'); clearErrs();
+  }
+
+  /* ════════════════════════════════════
+     TOAST
+  ════════════════════════════════════ */
+  function showToast(msg){
+    const t=document.getElementById('toast');
+    t.textContent=msg; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),3200);
+  }
+
+  /* ════════════════════════════════════
+     XSS ESCAPE
+     Always escape user data before
+     inserting into innerHTML
+  ════════════════════════════════════ */
+  function esc(str){
+    if(!str) return '';
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
+  }
+</script>
+</body>
+</html>

@@ -516,7 +516,6 @@ def logout():
 @app.route("/clear_history", methods=["POST"])
 def clear_history():
     db_clear_history()
-    excel_clear_history()
     return jsonify({"success": True})
 
 

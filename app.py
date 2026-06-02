@@ -413,8 +413,7 @@ def db_row_to_session(row):
 def index():
     active_row = db_get_active()
     active     = db_row_to_session(active_row)
-    hist_rows  = db_get_history(15)
-    history    = [db_row_to_session(r) for r in hist_rows]
+    history = []
 
     logo_path = None
     for ext in ALLOWED_EXTS:
